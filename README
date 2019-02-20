@@ -1,0 +1,31 @@
+/* Copyright 2018 Andrei-Lucian Birziche */
+	***IMPLEMENTAREA PROTOCOLULUI MINI-KERMIT***
+Pentru rezolvarea temei am inceput prin a-mi crea 3 structuri auxiliare: 
+1) mk -> structura principala de care ma folosesc pentru a crea pachetul 
+    Mini-Kermit;
+2) s_pkt -> pastreaza campurile ce se vor afla in zona de date pentru pachetul
+	de Send-Init;
+3) no_data -> folosit la mesajele de tip ACK/NACK din receiver.
+Apoi am continuat prin a-mi implementa o functie "send_wait" ce este folosita
+in sender pentru a transmite un pachet, asteptand ulterior raspunsul
+receptorului si trimitand din nou pachetul cu campurile CHECK si MARK
+actualizate in caz de NACK. Am grija ca structura pachetului sa fie cea ceruta,
+punand mai intai primele 4 campuri si zona de date, urmand ca acolo unde se
+sfarseste cea din urma sa pun campurile de CHECK si MARK. Functia se opreste
+atunci cand este primit mesajul de ACK si returneaza numarul de secventa la
+care s-a ajuns sau -1 in caz ca acelasi pachet a fost retransmis de mai mult
+de 3 ori.
+A doua si ultima functie creata "receive_send_init" este folosita in receiver
+la inceput doar pentru primirea pachetului de Send-Init si transmiterea sa cu
+numarul de secventa modificat catre emitator.
+Odata declarate aceste structuri si functii, le folosesc in sender si receiver
+dupa cum am explicat in comentarii.
+Pentru tratarea primirii pachetelor corupte, am calculat din nou crc-ul pe
+pachetul primit si l-am comparat cu campul CHECK. Cum bitii sunt corupti doar
+de la emitator la receptor, am facut aceasta verificare doar in receiver si am
+trimis ACK in caz ca este respectata egalitatea si NACK cu incrementarea
+numarului de secventa in celalalt caz.
+In cazul TIMEOUT-ului, dupa transmiterea unui mesaj in sender si in receiver,
+astept TIME secunde si in caz ca nu primesc raspuns cresc un contor local si il
+reinitializez atunci cand primesc mesaj. La 3 timeout-uri consecutive intrerup
+transmisia.
